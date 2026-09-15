@@ -1,4 +1,4 @@
-# AutoCAD MCP｜繁體中文說明版
+# AutoCAD MCP
 
 讓支援 MCP 的 AI 助理透過自然語言操作 AutoCAD，也能在未安裝 AutoCAD 的環境產生 DXF 圖檔。
 
