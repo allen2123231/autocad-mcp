@@ -2,7 +2,7 @@
 
 讓支援 MCP 的 AI 助理透過自然語言操作 AutoCAD，也能在未安裝 AutoCAD 的環境產生 DXF 圖檔。
 
-本儲存庫由 **allen2123231** 建立為個人分支，基於 [puran-water/autocad-mcp](https://github.com/puran-water/autocad-mcp)。本次調整為繁體中文文件整理，核心程式沿用上游；原作者及貢獻者的版權與 [MIT 授權](LICENSE) 完整保留。頁面下方另保留英文原文供對照。
+本儲存庫由 **allen2123231** 建立為個人分支，基於 [puran-water/autocad-mcp](https://github.com/puran-water/autocad-mcp)。本次調整為繁體中文文件整理，核心程式沿用上游；原作者及貢獻者的版權與 [MIT 授權](LICENSE) 完整保留。
 
 ## 可以做什麼？
 
@@ -77,7 +77,7 @@ uv sync
 }
 ```
 
-離線產生 DXF 時，將 `AUTOCAD_MCP_BACKEND` 改成 `ezdxf`。用戶端在 WSL 執行時，File IPC 仍需啟動 Windows 端 Python，完整範例見下方英文說明。
+離線產生 DXF 時，將 `AUTOCAD_MCP_BACKEND` 改成 `ezdxf`。用戶端在 WSL 執行時，File IPC 仍需啟動 Windows 端 Python，並使用 Windows 檔案路徑設定伺服器。
 
 ### 5. 驗證是否連線成功
 
@@ -152,241 +152,47 @@ uv run --with pytest --with pytest-asyncio pytest tests/ -v
 
 本次為文件中文化，並未宣稱已在所有 AutoCAD 版本完成實機測試。上游 README 稱此功能版本為 v3.1，`pyproject.toml` 的套件版本仍為 3.0.0。
 
+## 後續開發方向
+
+以下為規劃中的開發項目，尚未代表已完成功能；實作順序可依使用需求調整。目前優先改善連線可靠性，再擴充加工繪圖與批次出圖流程。
+
+### 第一階段：連線穩定與操作確認
+
+- [ ] **連線診斷工具：** 一次檢查 Python、MCP 啟動、AutoCAD 視窗、LISP 載入狀態與 IPC 資料夾，提供中文排除步驟。
+- [ ] **多圖面與多執行個體選擇：** 列出已開啟的 AutoCAD 視窗和圖檔，讓操作明確綁定指定文件。
+- [ ] **命令佇列與逾時處理：** 依序派送修改命令，逾時後查明執行結果，避免重複建立物件。
+- [ ] **備份與結果核對：** 修改前建立備份，完成後讀回圖元、尺寸及儲存狀態，留下可追查的操作紀錄。
+
+驗收重點：在切換圖面、同時開啟多個視窗及操作逾時時，仍能確認目標與結果，且不重複執行修改。
+
+### 第二階段：中文使用與安裝體驗
+
+- [ ] **中文工具說明與錯誤訊息：** 保留既有 API 名稱，補齊繁體中文參數解釋、單位及範例。
+- [ ] **Windows 安裝與設定精靈：** 協助建立虛擬環境、檢查路徑及產生 MCP 用戶端設定。
+- [ ] **範例圖面與教學：** 提供從連線檢查、基本繪圖、尺寸標註到另存輸出的練習檔與操作流程。
+- [ ] **版本相容性紀錄：** 逐一記錄 AutoCAD／AutoCAD LT 版本、Windows 環境及已驗證的功能範圍。
+
+驗收重點：使用者能依中文步驟完成安裝，並在測試圖面完成繪圖、標註、儲存與讀回確認。
+
+### 第三階段：加工繪圖與批次出圖
+
+- [ ] **尺寸標註規則：** 支援指定尺寸樣式、精度、文字高度與標註間距，檢查尺寸重疊及漏標。
+- [ ] **鋁板與鈑金加工圖流程：** 針對已有平面輪廓整理板件編號、孔位、折線及加工註記；涉及展開尺寸時，明確輸入板厚、折彎半徑與扣料規則。
+- [ ] **圖框與圖塊屬性批次更新：** 依指定範圍套用圖框、板號、版本及圖名，保留範圍外物件。
+- [ ] **批次 DWG／DXF／PDF 輸出：** 支援命名規則、出圖範圍、比例及資料夾設定，產出成功與失敗清單。
+- [ ] **表格資料對接：** 匯入 CSV／Excel 的板件尺寸與編號，先檢查欄位、單位和幾何條件，再建立或更新圖面。
+
+驗收重點：先完成單一板件樣本並確認尺寸，再執行批次；輸出後核對板號、數量、比例及檔案是否可重新開啟。
+
+### 第四階段：測試與持續維護
+
+- [ ] **自動化測試：** 建立工具參數、錯誤處理、ezdxf 輸出與 IPC 通訊的回歸測試。
+- [ ] **AutoCAD 實機驗證：** 在指定版本測試圖面讀寫、尺寸、截圖及批次流程，將實機結果與離線測試分開記錄。
+- [ ] **版本發布與變更紀錄：** 統一套件版本、文件版本與發布標籤，清楚列出新增功能、修正及已知限制。
+- [ ] **追蹤上游更新：** 比較上游修正，確認相容性後合併，持續維護本分支的中文文件與擴充功能。
+
+驗收重點：每次發布都有對應測試結果、變更紀錄與可重現的安裝方式。
+
 ## 來源與授權
 
 感謝 [puran-water/autocad-mcp](https://github.com/puran-water/autocad-mcp) 原作者與所有貢獻者。本專案依 [MIT License](LICENSE) 使用、修改及散布，請保留原始版權與授權聲明。
-
----
-
-## 英文原始說明
-
-<details>
-<summary>展開上游英文 README（保留原文供對照）</summary>
-
-
-# AutoCAD MCP Server
-
-MCP server for AutoCAD LT automation and headless DXF generation.
-
-Two backends, one API:
-
-| Backend | Runtime | Requires AutoCAD? | Screenshot |
-|---------|---------|-------------------|------------|
-| **File IPC** | Windows Python | Yes — AutoCAD LT 2024+ (Windows) | Win32 PrintWindow |
-| **ezdxf** | Any platform | No (headless) | matplotlib render |
-
-The server exposes **8 consolidated tools** (`drawing`, `entity`, `layer`, `block`, `annotation`, `pid`, `view`, `system`) over the MCP stdio transport. An MCP client (Claude Desktop, Claude Code, etc.) connects and drives AutoCAD through natural-language requests.
-
-## Prerequisites (File IPC backend)
-
-- **Windows 10/11** (the File IPC backend uses Win32 APIs for focus-free window messaging)
-- **AutoCAD LT 2024 or newer** — AutoLISP support was added in LT 2024 for Windows. AutoCAD LT for Mac exists but does **not** support AutoLISP.
-- **Python 3.10+** (Windows native — not WSL Python)
-- **uv** package manager ([install guide](https://docs.astral.sh/uv/getting-started/installation/))
-
-> The ezdxf headless backend works on any platform (Linux, macOS, WSL) for offline DXF generation without AutoCAD installed.
-
-## Quick Start
-
-### 1. Clone and install
-
-```powershell
-git clone https://github.com/puran-water/autocad-mcp.git
-cd autocad-mcp
-uv sync
-```
-
-### 2. Load the LISP dispatcher in AutoCAD LT
-
-Open AutoCAD LT and load `mcp_dispatch.lsp` using **APPLOAD**:
-
-1. Type `APPLOAD` in the AutoCAD command line
-2. Browse to `<repo>/lisp-code/mcp_dispatch.lsp`
-3. Click **Load**
-4. You should see: `=== MCP Dispatch v3.1 loaded ===` and `Ready for commands via (c:mcp-dispatch)`
-
-> **Tip:** Add the file to your AutoCAD Startup Suite (in the APPLOAD dialog) so it loads automatically with every drawing.
-
-### 3. Configure your MCP client
-
-Add to your MCP client configuration (e.g. Claude Desktop `claude_desktop_config.json`):
-
-```json
-{
-  "mcpServers": {
-    "autocad-mcp": {
-      "command": "C:\\path\\to\\autocad-mcp\\.venv\\Scripts\\python.exe",
-      "args": ["-m", "autocad_mcp"],
-      "env": { "AUTOCAD_MCP_BACKEND": "auto" }
-    }
-  }
-}
-```
-
-**Key points:**
-
-- The `command` must point to the **Windows Python** inside the project venv (not WSL python).
-- `AUTOCAD_MCP_BACKEND` can be `auto` (default — tries File IPC, falls back to ezdxf), `file_ipc` (requires AutoCAD), or `ezdxf` (headless only).
-
-#### Running from WSL
-
-If your MCP client runs in WSL (e.g. Claude Code), launch the server through `cmd.exe` so it runs as a native Windows process:
-
-```json
-{
-  "mcpServers": {
-    "autocad-mcp": {
-      "type": "stdio",
-      "command": "cmd.exe",
-      "args": ["/d", "/s", "/c", "cd /d C:\\path\\to\\autocad-mcp && .venv\\Scripts\\python.exe -m autocad_mcp"],
-      "env": { "AUTOCAD_MCP_BACKEND": "auto" }
-    }
-  }
-}
-```
-
-### 4. Verify
-
-From your MCP client, call:
-
-```
-system(operation="status")
-```
-
-You should see `backend: "file_ipc"` if AutoCAD is running, or `backend: "ezdxf"` for headless mode.
-
-## Tools
-
-### `drawing` — File/drawing management
-
-| Operation | Description | File IPC | ezdxf |
-|-----------|-------------|----------|-------|
-| `create` | Reset to clean drawing (erase all + purge) | Yes | Yes |
-| `open` | Open an existing drawing | Yes | Yes (DXF) |
-| `info` | Get entity count and layers | Yes | Yes |
-| `save` | Save current drawing (to path if given) | Yes | Yes |
-| `save_as_dxf` | Export as DXF | Yes | Yes |
-| `plot_pdf` | Plot to PDF | Yes | No |
-| `purge` | Purge unused objects | Yes | Yes |
-| `get_variables` | Get system variables by name | Yes | Yes |
-| `undo` | Undo last operation | Yes | No |
-| `redo` | Redo last undone operation | Yes | No |
-
-### `entity` — Entity CRUD + modification
-
-**Create:** `create_line`, `create_circle`, `create_polyline`, `create_rectangle`, `create_arc`, `create_ellipse`, `create_mtext`, `create_hatch`
-
-**Read:** `list`, `count`, `get`
-
-**Modify:** `copy`, `move`, `rotate`, `scale`, `mirror`, `offset`\*, `array`, `fillet`\*, `chamfer`\*, `erase`
-
-> \* `offset`, `fillet`, `chamfer` are File IPC only (not supported in ezdxf headless backend).
-
-### `layer` — Layer management
-
-`list`, `create`, `set_current`, `set_properties`, `freeze`, `thaw`, `lock`, `unlock`
-
-### `block` — Block operations
-
-| Operation | File IPC | ezdxf |
-|-----------|----------|-------|
-| `list` | Yes | Yes |
-| `insert` | Yes | Yes |
-| `insert_with_attributes` | Yes | Yes |
-| `get_attributes` | Yes | Yes |
-| `update_attribute` | Yes | Yes |
-| `define` | No | Yes |
-
-### `annotation` — Text, dimensions, leaders
-
-`create_text`, `create_dimension_linear`, `create_dimension_aligned`, `create_dimension_angular`, `create_dimension_radius`, `create_leader`
-
-### `pid` — P&ID operations (CTO symbol library)
-
-`setup_layers`, `insert_symbol`, `list_symbols`, `draw_process_line`, `connect_equipment`, `add_flow_arrow`, `add_equipment_tag`, `add_line_number`, `insert_valve`, `insert_instrument`, `insert_pump`, `insert_tank`
-
-> P&ID symbol insertion requires the [CAD Tools Online](https://www.cadtoolsonline.com/) (CTO) P&ID Symbol Library installed at `C:\PIDv4-CTO\`. The ezdxf backend has built-in CTO library support. For the File IPC backend, some P&ID operations require additional LISP helpers — see the P&ID section in the wiki for setup details.
-
-### `view` — Viewport and screenshot
-
-| Operation | Description |
-|-----------|-------------|
-| `zoom_extents` | Zoom to show all entities |
-| `zoom_window` | Zoom to a specified window |
-| `get_screenshot` | Capture current AutoCAD view as PNG |
-
-Screenshots use `PrintWindow` (Win32) for the File IPC backend — works even when AutoCAD is minimized or in the background. The ezdxf backend renders via matplotlib.
-
-### `system` — Server management
-
-`status`, `health`, `get_backend`, `runtime`, `init`, `execute_lisp`
-
-> `execute_lisp` runs arbitrary AutoLISP code (File IPC only). Pass `data: {code: "(+ 1 2)"}`. This turns the server into an extensible automation platform — any valid AutoLISP expression can be executed.
-
-## Architecture
-
-```
-MCP Client (Claude)
-    │  stdio (JSON-RPC)
-    ▼
-Python MCP Server (autocad_mcp)
-    │
-    ├── File IPC Backend ──► C:/temp/*.json ──► mcp_dispatch.lsp (AutoCAD LT)
-    │   PostMessageW(WM_CHAR) to MDIClient — no focus steal
-    │
-    └── ezdxf Backend ──► in-memory DXF (headless, no AutoCAD needed)
-```
-
-The File IPC backend sends keystrokes to AutoCAD's MDIClient window via `PostMessageW(WM_CHAR)`, triggering the `(c:mcp-dispatch)` AutoLISP command. This approach does **not** steal window focus — you can continue working in other applications while automation runs.
-
-## Environment Variables
-
-| Variable | Default | Description |
-|----------|---------|-------------|
-| `AUTOCAD_MCP_BACKEND` | `auto` | Backend selection: `auto`, `file_ipc`, `ezdxf` |
-| `AUTOCAD_MCP_IPC_DIR` | `C:/temp` | Directory for IPC command/result JSON files (must match on both Python and LISP sides) |
-| `AUTOCAD_MCP_IPC_TIMEOUT` | `10.0` | IPC command timeout in seconds (1-300) |
-| `AUTOCAD_MCP_ONLY_TEXT` | `false` | Disable screenshot capture (text feedback only) |
-
-> **Note:** If you change `AUTOCAD_MCP_IPC_DIR`, you must also update the `*mcp-ipc-dir*` variable in `mcp_dispatch.lsp` to match.
-
-## Development
-
-```powershell
-uv sync
-uv run pytest tests/ -v
-```
-
-## AutoCAD LT AutoLISP Compatibility
-
-AutoLISP was added to AutoCAD LT in the **2024 release (Windows only)**. AutoCAD LT for Mac does not support AutoLISP.
-
-| Supported (LT 2024+ Windows) | Not Supported |
-|-------------------------------|---------------|
-| `.lsp` / `.fas` / `.vlx` / `.dcl` | VLIDE (Visual LISP IDE) |
-| All `vl-*` utility functions | `vlax-*` (ActiveX/COM) |
-| File I/O (`open`, `read-line`, etc.) | Express Tools |
-| Entity access (`entget`, `entmod`, etc.) | 3D operations |
-| Selection sets | AutoLISP on Mac |
-
-The `mcp_dispatch.lsp` dispatcher is fully compatible with LT 2024+.
-
-## What's New in v3.1
-
-- **`execute_lisp`** — Run arbitrary AutoLISP code via temp file pattern. Turns the server from a fixed command set into an extensible automation platform.
-- **Undo / Redo** — Single-step undo and redo via `drawing` tool.
-- **Drawing open** — Open existing `.dwg` files programmatically (FILEDIA suppressed).
-- **Drawing create** — Now resets current drawing (erase all + purge) instead of `_.NEW`, preserving the LISP dispatcher namespace.
-- **Drawing save with path** — `save` with a `path` parameter uses SAVEAS; without path uses QSAVE.
-- **`get_variables` fix** — Respects the `names` parameter; returns requested variables with proper type handling.
-- **Polyline/leader fix** — Point arrays properly encoded via semicolon-delimited format.
-- **ESC prefix** — Sends 2x ESC before each dispatch to cancel stale pending commands from prior timeouts.
-- **UTF-8/cp1252 fallback** — Handles non-ASCII characters in LISP result files (AutoCAD writes Windows-1252).
-- **Configurable IPC timeout** — `AUTOCAD_MCP_IPC_TIMEOUT` env var (1–300 seconds, default 10).
-- **Thread-safe backend init** — `asyncio.Lock` prevents parallel initialization races.
-
-## License
-
-MIT
-
-</details>
