@@ -2,7 +2,11 @@
 
 讓支援 MCP 的 AI 助理透過自然語言操作 AutoCAD，也能在未安裝 AutoCAD 的環境產生 DXF 圖檔。
 
-本儲存庫由 **allen2123231** 建立為個人分支，基於 [puran-water/autocad-mcp](https://github.com/puran-water/autocad-mcp)。本次調整為繁體中文文件整理，核心程式沿用上游；原作者及貢獻者的版權與 [MIT 授權](LICENSE) 完整保留。
+本儲存庫由 **allen2123231** 建立為個人分支，基於 [puran-water/autocad-mcp](https://github.com/puran-water/autocad-mcp)。本分支保留繁體中文文件，核心程式同步上游；原作者及貢獻者的版權與 [MIT 授權](LICENSE) 完整保留。
+
+## 上游定位與適用範圍
+
+上游由 [Puran Water](https://puranwater.com/) 維護，作為 PuranOS 工程流程中的圖面自動化整合。[工程計算與工作流程](https://github.com/puran-water/PuranOS-public/blob/main/docs/workflows.md) 提供工程依據，[PuranOS Studio](https://github.com/puran-water/PuranOS-public/blob/main/docs/studio.md) 呈現審查成果。本工具負責指定工作圖面的操作；CAD 命令成功或取得截圖，不代表設計已核准。本儲存庫與 PuranOS 公開計算服務分開維護。
 
 ## 可以做什麼？
 
@@ -55,7 +59,7 @@ uv sync
 1. 開啟 AutoCAD 與要操作的圖面。
 2. 在命令列輸入 `APPLOAD`。
 3. 選擇專案內的 `lisp-code/mcp_dispatch.lsp` 並載入。
-4. 確認命令列顯示 `MCP Dispatch v3.1 loaded` 及 `Ready for commands via (c:mcp-dispatch)`。
+4. 確認命令列顯示 `MCP Dispatch v3.2 loaded` 及 `Ready for commands via (c:mcp-dispatch)`。
 
 可將檔案加入 APPLOAD 的啟動套件，讓之後開啟圖面時自動載入。
 
@@ -116,13 +120,40 @@ drawing(operation="info")
 
 這個操作限 File IPC 後端。Python 端會處理暫存程式檔；對本版本的 MCP 工具應傳入 `code`。若使用其他修改版，請依該版本實際工具定義確認參數。
 
+## 3.2.0 更新與原生圖面修訂
+
+- 修正圖層、填充、圓弧、聚合線、JSON 跳脫、多行 LISP 結果及離線線性尺寸方向，避免工具回覆重複內容。
+- 派送器未接收命令時，可自動載入目前圖面的 LISP，再處理同一份命令；已接收的命令不重送。切換圖面後，先核對待處理命令與回執，僅在確認尚未執行且無修改時使用 `system.init` 重新連線。
+- 新增原生修訂、桌面狀態及復原工具。修訂前核對圖面路徑、物件舊值與圖層鎖定狀態，每批 1 至 7 個操作並保留操作紀錄及修改前後回執。
+- 支援正交路線修訂雲、保留舊圖層屬性的重新命名、連續線段轉聚合線、聚合線斷點、線型與比例、線寬、圖塊屬性及原生圖塊旋轉。旋轉使用插入點與絕對弧度角度，保留屬性，並檢查原本的位置、旋轉與法向量。
+- 原生修訂的 `save` 預設使用 AutoCAD 2010（`format:48`），輸出後應核對 DWG 標頭 `AC1024`；一般 `drawing.save` 仍依 AutoCAD 儲存預設值。
+
+操作原生 DWG 時，請明確設定 `file_ipc`。編輯前使用 `drawing.get_variables` 確認 `DWGNAME`、`DWGPREFIX`、`CTAB`、`DBMOD`，再檢查目前畫面；`system.status` 本身不能確認目前圖檔。請在 Windows 可存取的工作副本操作，勿以會清空圖面的 `drawing.create` 建立副本。
+
+唯讀查詢指定圖面物件範例：
+
+```json
+{
+  "operation": "revision",
+  "data": {
+    "action": "read",
+    "drawing": "C:/work/copy.dwg",
+    "handles": ["ABCD"]
+  }
+}
+```
+
+詳細參數、批次修訂範例、CLI、復原步驟與限制請參閱[原生修訂文件](docs-revision.md)及[旋轉驗證說明](docs/rotation-qualification.md)。Python 編譯器與 `revision_tools.lsp` 必須來自同一版本；有結果未明的命令時，先核對回執，勿透過重新初始化繞過待確認狀態。
+
 ## 設定與常見問題
 
 | 環境變數 | 預設值 | 說明 |
 | --- | --- | --- |
 | `AUTOCAD_MCP_BACKEND` | `auto` | `auto`、`file_ipc` 或 `ezdxf` |
 | `AUTOCAD_MCP_IPC_DIR` | `C:/temp` | 命令與結果 JSON 的交換資料夾 |
-| `AUTOCAD_MCP_IPC_TIMEOUT` | `10.0` | 等待秒數，可設定 1 至 300 |
+| `AUTOCAD_MCP_IPC_TIMEOUT` | `30.0` | 一般命令等待秒數，可設定 1 至 300 |
+| `AUTOCAD_MCP_IPC_LONG_TIMEOUT` | `120.0` | AutoLISP 與出圖等長作業的等待秒數，上限 600，且不低於一般命令等待時間 |
+| `AUTOCAD_MCP_AUTOLOAD` | `1` | 未收到命令時自動載入目前圖面的 LISP 派送器；設為 `0` 停用 |
 | `AUTOCAD_MCP_ONLY_TEXT` | `false` | 設為 `true` 時只回傳文字、不擷取畫面 |
 
 - **找不到工具：** 先確認用戶端是否啟用 MCP 設定、Python 路徑是否存在及伺服器能否啟動。沒有顯示工具，不等於本機未安裝。
@@ -146,15 +177,16 @@ LICENSE            原始 MIT 授權
 開發測試可執行：
 
 ```powershell
-uv sync
-uv run --with pytest --with pytest-asyncio pytest tests/ -v
+uv sync --group dev
+uv run ruff check src/
+uv run pytest -q
 ```
 
-本次為文件中文化，並未宣稱已在所有 AutoCAD 版本完成實機測試。上游 README 稱此功能版本為 v3.1，`pyproject.toml` 的套件版本仍為 3.0.0。
+目前套件版本為 **3.2.0**，同步上游 `f07b6a5071364a7c4b111ac41a0fc680a3d1ca18`。上游曾在 Windows AutoCAD LT 2027 驗證部分原生修訂流程；其他版本仍需在測試圖面驗證，不代表支援完整外部 COM API。
 
 ## 後續開發方向
 
-以下為規劃中的開發項目，尚未代表已完成功能；實作順序可依使用需求調整。目前優先改善連線可靠性，再擴充加工繪圖與批次出圖流程。
+以下保留本分支的開發方向。上游 3.2.0 已提供部分命令紀錄、原生修訂與回歸測試，勾選清單仍代表本分支完整流程的後續驗收項目；實作順序可依使用需求調整。
 
 ### 第一階段：連線穩定與操作確認
 
