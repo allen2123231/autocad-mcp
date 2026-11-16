@@ -491,8 +491,8 @@
   (setq layers (tblnext "LAYER" T))
   (while layers
     (if (> (strlen layer-list) 0)
-      (setq layer-list (strcat layer-list ",\"" (cdr (assoc 2 layers)) "\""))
-      (setq layer-list (strcat "\"" (cdr (assoc 2 layers)) "\""))
+      (setq layer-list (strcat layer-list ",\"" (mcp-escape-string (cdr (assoc 2 layers))) "\""))
+      (setq layer-list (strcat "\"" (mcp-escape-string (cdr (assoc 2 layers))) "\""))
     )
     (setq layers (tblnext "LAYER"))
   )
